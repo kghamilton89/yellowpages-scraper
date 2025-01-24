@@ -2,7 +2,7 @@
 
 This repository contains a Python-language web scraper for `yellowpages.com` to quickly collect a large amount of user-defined business data using the `requests` library.
 
-The code in its current represents a significant departure from the originally forked library and features the following improvements:
+The code in its current state represents a significant departure from the originally forked library and features the following improvements:
 
 - Graceful handling of `503` HTTP responses caused by implementation of Cloudflare DNS proxying by `yellowpages.com`
 - Support for custom multipage content input user-defined start and end page
