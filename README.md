@@ -1,16 +1,17 @@
-# Yellow Pages Business Details Scraper
+# Yellow Pages Scraper 2.0
 
-Yellowpages.com Web Scraper written in Python and LXML to extract business details available based on a particular category and location.
+This repository contains a Python-language web scraper for `yellowpages.com` to quickly collect a large amount of user-defined business data using the `requests` library.
 
-If you would like to know more about this scraper you can check it out at the blog post 'How to Scrape Business Details from Yellow Pages using Python and LXML' - https://www.scrapehero.com/how-to-scrape-business-details-from-yellowpages-com-using-python-and-lxml/
+The code in its current represents a significant departure from the originally forked library and features the following improvements:
 
-## Getting Started
+- Graceful handling of `503` HTTP responses caused by implementation of Cloudflare DNS proxying by `yellowpages.com`
+- Support for custom multipage content input user-defined start and end page
+- Modified input parameter nomenclature and format to support more consistent function
+- Retry mechanisms to prevent ungraceful exits, graceful exit processes for continued resource inavailability
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+Nonetheless, we wish to extend our humble thanks to [ScrapeHero](https://github.com/scrapehero) for providing the foundation upon which this toolkit was created.
 
-### Fields to Extract
-
-This yellow pages scraper can extract the fields below:
+Yellow Pages Scraper 2.0 extracts the following fields, if they are available:
 
 1. Rank
 2. Business Name
@@ -25,33 +26,35 @@ This yellow pages scraper can extract the fields below:
 11. Zipcode
 12. URL
 
-### Prerequisites
+## Prerequisites
 
-For this web scraping tutorial using Python 3, we will need some packages for downloading and parsing the HTML. 
-Below are the package requirements:
+All required libraries are found in `requirements.txt`. Please install them using whichever package manager you prefer.
 
- - lxml
- - requests
+## Usage
 
-### Installation
+Yellow Pages web scraper is launched with the following command
 
-PIP to install the following packages in Python (https://pip.pypa.io/en/stable/installing/) 
-
-Python Requests, to make requests and download the HTML content of the pages (http://docs.python-requests.org/en/master/user/install/)
-
-Python LXML, for parsing the HTML Tree Structure using Xpaths (Learn how to install that here – http://lxml.de/installation.html)
-
-## Running the scraper
-We would execute the code with the script name followed by the positional arguments **keyword** and **place**. Here is an example
-to find the business details for restaurants in Boston. MA.
-
+```bash
+python scrape.py "keyword" "location" x y
 ```
-python3 yellow_pages.py restaurants Boston,MA
+
+Where:
+
+- `"keyword"` is the type of business to query
+- `"location"` is the human-readable city and state to query
+- `x` is the first page to query
+- `y` is the last page to query
+
+Thus, a complete request looks like this:
+
+```bash
+python scrape.py "restaurant" "Seattle, WA" 1 5
 ```
-## Sample Output
 
-This will create a csv file:
+## Output
 
-[Sample Output](https://raw.githubusercontent.com/scrapehero/yellow_pages/master/restaurants-boston-yellowpages-scraped-data.csv)
- 
- 
+The output of Yellow Pages Scraper 2.0 is a comma-separated values (CSV) file named based on the input parameters.
+
+Continuing with the example above, the CSV output is:
+
+`restaurant-seattle-wa-yellowpages.csv`
