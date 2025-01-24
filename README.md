@@ -13,18 +13,15 @@ Nonetheless, we wish to extend our humble thanks to [ScrapeHero](https://github.
 
 Yellow Pages Scraper 2.0 extracts the following fields, if they are available:
 
-1. Rank
-2. Business Name
-3. Phone Number
-4. Business Page
-5. Category
-6. Website
-7. Rating
-8. Street name
-9. Locality
-10. Region
-11. Zipcode
-12. URL
+```python
+business_name,
+telephone,
+rank,
+website,
+zipcode,
+```
+
+`yellowpages.com` does not make business email addresses publically available.
 
 ## Prerequisites
 
@@ -50,6 +47,8 @@ Thus, a complete request looks like this:
 ```bash
 python scrape.py "restaurant" "Seattle, WA" 1 5
 ```
+
+The above input queries the first five pages of restaurants in Seattle, Washington.
 
 ## Output
 

@@ -29,6 +29,8 @@ def parse_listing(keyword, place, page):
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36'
     }
 
+    # define retry parameters
+    # certain geolocations outside of the united states may require more retries or longer intervals between retries, this is a function of the expected behaviour of cloudflare dns proxy features
     max_retries = 10
     retry_delay = 5
 
@@ -82,6 +84,7 @@ def parse_listing(keyword, place, page):
 
                 return scraped_results
 
+            # handle 404
             elif response.status_code == 404:
                 print(f"Could not find a location matching {place}. Status code: 404")
                 if retry < max_retries - 1:
@@ -101,6 +104,7 @@ def parse_listing(keyword, place, page):
                     print("Max retries reached. Exiting.")
                     return []
 
+        # fail out
         except Exception as e:
             print(f"Failed to process page {page}: {e}")
             if retry < max_retries - 1:
@@ -132,11 +136,12 @@ if __name__ == "__main__":
             break
         all_scraped_data.extend(scraped_data)
 
-        # Add a 10-second delay between page attempts
+        # add a 10-second delay between page attempts to prevent page freeze
         if page < end_page:
             print("Waiting 10 seconds before processing the next page...")
             time.sleep(10)
 
+# format output file in predictable way
 if all_scraped_data:
     formatted_place = place.replace(", ", "-")
     file_name = f"{keyword}-{formatted_place}-yellowpages.csv"
