@@ -7,7 +7,11 @@ import socket
 from disposable_email_domains import blocklist
 
 # Common email prefixes to try
-COMMON_EMAIL_PREFIXES = ['info', 'contact', 'support', 'admin', 'sales', 'hello']
+COMMON_EMAIL_PREFIXES = [
+    'info', 'contact', 'support', 'admin', 'sales', 'hello', 'team', 
+    'service', 'billing', 'noreply', 'inquiries', 'help', 'marketing', 
+    'careers', 'office', 'press', 'reservations', 'orders', 'webmaster'
+]
 
 def extract_domain(url):
     """Extract domain from URL and remove subdomains like 'www'."""
