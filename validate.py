@@ -2,6 +2,8 @@ import csv
 import sys
 from urllib.parse import urlparse
 import dns.resolver
+import smtplib
+import socket
 from disposable_email_domains import blocklist
 
 # Common email prefixes to try
@@ -26,14 +28,25 @@ def generate_emails(domain):
         emails.append(f"{prefix}@{domain}")
     return emails
 
-def validate_email_with_dns(email):
-    """Validate email using DNS checks."""
+def validate_email_with_smtp(email):
+    """Validate email using DNS and SMTP checks."""
     try:
         domain = email.split('@')[1]
 
         # Check MX records for the domain
         mx_records = dns.resolver.resolve(domain, 'MX')
-        dns_check = bool(mx_records)  # If MX records exist, DNS check passes
+        mx_record = str(mx_records[0].exchange)
+        dns_check = True
+
+        # Perform SMTP validation
+        smtp_check = False
+        with smtplib.SMTP(timeout=10) as smtp:
+            smtp.connect(mx_record)
+            smtp.helo()
+            smtp.mail('test@example.com')  # Sender email (can be any valid email)
+            code, _ = smtp.rcpt(email)  # Check if the recipient email exists
+            if code == 250:  # 250 indicates the email address is valid
+                smtp_check = True
 
         # Check if the domain is disposable
         is_disposable = domain in blocklist
@@ -41,7 +54,7 @@ def validate_email_with_dns(email):
         return {
             'email': email,
             'dns_check': dns_check,
-            'smtp_check': False,  # Skip SMTP validation for now
+            'smtp_check': smtp_check,
             'disposable_check': not is_disposable
         }
     except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.Timeout):
@@ -50,6 +63,15 @@ def validate_email_with_dns(email):
             'email': email,
             'dns_check': False,
             'smtp_check': False,
+            'disposable_check': False
+        }
+    except (smtplib.SMTPException, socket.error) as e:
+        # If SMTP validation fails, log the error
+        print(f"SMTP validation failed for {email}: {e}")
+        return {
+            'email': email,
+            'dns_check': True,  # DNS check passed (MX records exist)
+            'smtp_check': False,  # SMTP check failed
             'disposable_check': False
         }
     except Exception as e:
@@ -79,7 +101,7 @@ def main(csv_file, limit=None):
             emails = generate_emails(domain)
             for email in emails:
                 print(f"Validating email: {email}")
-                validation_result = validate_email_with_dns(email)
+                validation_result = validate_email_with_smtp(email)
                 results.append([
                     validation_result['email'],
                     validation_result['dns_check'],
