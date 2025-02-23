@@ -4,15 +4,36 @@ import unicodecsv as csv
 import argparse
 from urllib.parse import quote_plus
 import time
+import random
+
+# Double the amount of user agents
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
+    'Mozilla/5.0 (iPad; CPU OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1'
+]
+
+def get_random_user_agent():
+    return random.choice(USER_AGENTS)
 
 def parse_listing(keyword, place, page):
-    """
-    Function to process yellowpage listing page
-    :param keyword: search query
-    :param place: place name
-    :param page: number of pages to scrape
-    """
-    # encode place parameter
     encoded_place = quote_plus(place)
     url = f"https://www.yellowpages.com/search?search_terms={keyword}&geo_location_terms={encoded_place}&page={page}"
 
@@ -26,11 +47,9 @@ def parse_listing(keyword, place, page):
         'Connection': 'keep-alive',
         'Host': 'www.yellowpages.com',
         'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36'
+        'User-Agent': get_random_user_agent()
     }
 
-    # define retry parameters
-    # certain geolocations outside of the united states may require more retries or longer intervals between retries, this is a function of the expected behaviour of cloudflare dns proxy features
     max_retries = 10
     retry_delay = 5
 
@@ -84,17 +103,10 @@ def parse_listing(keyword, place, page):
 
                 return scraped_results
 
-            # handle 404
             elif response.status_code == 404:
                 print(f"Could not find a location matching {place}. Status code: 404")
-                if retry < max_retries - 1:
-                    print(f"Retrying in 5 seconds... (Attempt {retry + 1} of {max_retries})")
-                    time.sleep(5)
-                    continue  
-                else:
-                    print("Max retries reached. Exiting.")
-                    return [] 
-                
+                return []
+
             else:
                 print(f"Failed to process page {page}. Status code: {response.status_code}")
                 if retry < max_retries - 1:
@@ -104,7 +116,6 @@ def parse_listing(keyword, place, page):
                     print("Max retries reached. Exiting.")
                     return []
 
-        # fail out
         except Exception as e:
             print(f"Failed to process page {page}: {e}")
             if retry < max_retries - 1:
@@ -136,19 +147,19 @@ if __name__ == "__main__":
             break
         all_scraped_data.extend(scraped_data)
 
-        # add a 10-second delay between page attempts to prevent page freeze
+        # Random delay between 10 and 20 seconds
+        delay = random.randint(10, 20)
         if page < end_page:
-            print("Waiting 10 seconds before processing the next page...")
-            time.sleep(10)
+            print(f"Waiting {delay} seconds before processing the next page...")
+            time.sleep(delay)
 
-# format output file in predictable way
-if all_scraped_data:
-    formatted_place = place.replace(", ", "-")
-    file_name = f"{keyword}-{formatted_place}-yellowpages.csv"
-    print(f"Writing scraped data to {file_name}")
-    with open(file_name, 'wb') as csvfile:
-        fieldnames = ['rank', 'business_name', 'telephone', 'website', 'zipcode']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
-        writer.writeheader()
-        for data in all_scraped_data:
-            writer.writerow(data)
+    if all_scraped_data:
+        formatted_place = place.replace(", ", "-")
+        file_name = f"{keyword}-{formatted_place}-yellowpages.csv"
+        print(f"Writing scraped data to {file_name}")
+        with open(file_name, 'wb') as csvfile:
+            fieldnames = ['rank', 'business_name', 'telephone', 'website', 'zipcode']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
+            writer.writeheader()
+            for data in all_scraped_data:
+                writer.writerow(data)
